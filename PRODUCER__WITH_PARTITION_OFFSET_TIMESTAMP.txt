@@ -1,0 +1,54 @@
+
+
+
+
+package com.kafka.test;
+
+import oracle.jrockit.jfr.Recording;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.StringSerializer;
+
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+public class MyProducer {
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+
+        String bootstrapServers = "127.0.0.1:9092";
+
+        // create Producer properties
+        Properties properties = new Properties();
+        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        // create the producer
+        KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
+
+        // create a producer record
+        for(int i=11; i<=20; i++) {
+            ProducerRecord<String, String> record =
+                    new ProducerRecord<String, String>("java_topic", "hello world "+i);
+
+            // send data - asynchronous
+            Future<RecordMetadata> future  = producer.send(record);
+
+            RecordMetadata metadta = future.get();
+            System.out.println("Topic: "+metadta.topic()+
+                    "; Offset: "+metadta.offset()+
+                    "; Partition: "+ metadta.partition()+
+                    "; Timestamp: "+ metadta.timestamp());
+
+        }
+        // flush data
+        producer.flush();
+        // flush and close producer
+        producer.close();
+
+    }
+}
